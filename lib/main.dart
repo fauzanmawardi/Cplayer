@@ -15,7 +15,7 @@ class CplayerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Cplayer',
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
       home: const SplashScreen(),
     );
   }

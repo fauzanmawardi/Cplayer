@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../playlist/presentation/screens/home_screen.dart';
+import '../../../shell/presentation/screens/main_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const MainShell()),
     );
   }
 

@@ -1,202 +1,169 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../audio_player/presentation/screens/audio_player_screen.dart';
 import '../../../video_player/presentation/screens/video_player_screen.dart';
 import '../../data/models/media_item.dart';
 import '../providers/playlist_provider.dart';
-import '../widgets/media_card.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 11) return 'Good Morning';
+    if (hour < 15) return 'Good Afternoon';
+    if (hour < 19) return 'Good Evening';
+    return 'Good Night';
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _showAddUrlDialog(BuildContext context, WidgetRef ref) {
-    final urlController = TextEditingController();
-    final titleController = TextEditingController();
-    MediaType selectedType =
-        _tabController.index == 0 ? MediaType.audio : MediaType.video;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Tambah dari URL'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Judul',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<MediaType>(
-                      title: const Text('Audio'),
-                      value: MediaType.audio,
-                      groupValue: selectedType,
-                      onChanged: (v) => setState(() => selectedType = v!),
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<MediaType>(
-                      title: const Text('Video'),
-                      value: MediaType.video,
-                      groupValue: selectedType,
-                      onChanged: (v) => setState(() => selectedType = v!),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (urlController.text.trim().isEmpty) return;
-                ref.read(playlistProvider.notifier).addNetworkMedia(
-                      url: urlController.text.trim(),
-                      title: titleController.text.trim().isEmpty
-                          ? urlController.text.trim()
-                          : titleController.text.trim(),
-                      type: selectedType,
-                    );
-                Navigator.pop(ctx);
-              },
-              child: const Text('Tambah'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMediaList(List<MediaItem> items, MediaType type) {
-    final filtered = items.where((e) => e.type == type).toList();
-
-    if (filtered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              type == MediaType.audio ? Icons.music_off : Icons.videocam_off,
-              size: 64,
-              color: Colors.grey[350],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              type == MediaType.audio ? 'Belum ada audio' : 'Belum ada video',
-              style: TextStyle(color: Colors.grey[500], fontSize: 16),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: filtered.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final item = filtered[index];
-        return MediaCard(
-          item: item,
-          onTap: () {
-            if (item.type == MediaType.audio) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AudioPlayerScreen(item: item)),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => VideoPlayerScreen(item: item)),
-              );
-            }
-          },
-          onDelete: () => ref.read(playlistProvider.notifier).remove(item.id),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final playlist = ref.watch(playlistProvider);
+    final audioCount = playlist.where((e) => e.type == MediaType.audio).length;
+    final videoCount = playlist.where((e) => e.type == MediaType.video).length;
+    final recent = playlist.reversed.take(3).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cplayer', style: TextStyle(fontWeight: FontWeight.bold)),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.music_note), text: 'Audio'),
-            Tab(icon: Icon(Icons.movie), text: 'Video'),
-          ],
+        actions: [
+          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            '${_greeting()} 👋',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Let's play something awesome",
+            style: TextStyle(color: Colors.grey[400], fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+
+          const Text('Quick Access', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _QuickAccessCard(
+                  icon: Icons.music_note_rounded,
+                  label: 'Music',
+                  subtitle: '$audioCount songs',
+                  colors: const [AppColors.primaryBlue, AppColors.primaryPurple],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _QuickAccessCard(
+                  icon: Icons.videocam_rounded,
+                  label: 'Video',
+                  subtitle: '$videoCount videos',
+                  colors: const [AppColors.primaryPurple, AppColors.primaryPink],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Recently Played', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              TextButton(onPressed: () {}, child: const Text('View all')),
+            ],
+          ),
+          if (recent.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text('Belum ada media diputar', style: TextStyle(color: Colors.grey[500])),
+            )
+          else
+            ...recent.map((item) => _RecentTile(
+                  item: item,
+                  onTap: () {
+                    if (item.type == MediaType.audio) {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => AudioPlayerScreen(item: item)));
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => VideoPlayerScreen(item: item)));
+                    }
+                  },
+                )),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickAccessCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final List<Color> colors;
+
+  const _QuickAccessCard({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(icon, color: Colors.white),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentTile extends StatelessWidget {
+  final MediaItem item;
+  final VoidCallback onTap;
+
+  const _RecentTile({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          item.type == MediaType.audio ? Icons.music_note_rounded : Icons.movie_rounded,
+          color: AppColors.primaryPurple,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildMediaList(playlist, MediaType.audio),
-          _buildMediaList(playlist, MediaType.video),
-        ],
+      title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(item.isLocal ? 'File lokal' : 'Streaming'),
+      trailing: IconButton(
+        icon: const Icon(Icons.play_circle_fill, color: AppColors.primaryPurple),
+        onPressed: onTap,
       ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: 'addUrl',
-            onPressed: () => _showAddUrlDialog(context, ref),
-            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-            child: const Icon(Icons.link),
-          ),
-          const SizedBox(width: 12),
-          FloatingActionButton(
-            heroTag: 'addFile',
-            onPressed: () => ref.read(playlistProvider.notifier).addLocalFiles(),
-            child: const Icon(Icons.add),
-          ),
-        ],
-      ),
+      onTap: onTap,
     );
   }
 }
