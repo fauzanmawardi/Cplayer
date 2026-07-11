@@ -8,7 +8,8 @@ import '../../data/models/media_item.dart';
 import '../providers/playlist_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+  final void Function(int index)? onNavigateToTab;
+  const HomeScreen({super.key, this.onNavigateToTab});
 
   String _greeting() {
     final hour = DateTime.now().hour;
@@ -56,6 +57,7 @@ class HomeScreen extends ConsumerWidget {
                   label: 'Music',
                   subtitle: '$audioCount songs',
                   colors: const [AppColors.primaryBlue, AppColors.primaryPurple],
+                  onTap: () => onNavigateToTab?.call(1)
                 ),
               ),
               const SizedBox(width: 12),
@@ -65,6 +67,7 @@ class HomeScreen extends ConsumerWidget {
                   label: 'Video',
                   subtitle: '$videoCount videos',
                   colors: const [AppColors.primaryPurple, AppColors.primaryPink],
+                  onTap: () => onNavigateToTab?.call(1)
                 ),
               ),
             ],
@@ -105,31 +108,41 @@ class _QuickAccessCard extends StatelessWidget {
   final String label;
   final String subtitle;
   final List<Color> colors;
+  final VoidCallback? onTap;
 
   const _QuickAccessCard({
     required this.icon,
     required this.label,
     required this.subtitle,
     required this.colors,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: Colors.white),
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        ],
+        onTap: onTap,
+        child: Container(
+          height: 100,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: Colors.white),
+              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            ],
+          ),
+        ),
       ),
     );
   }

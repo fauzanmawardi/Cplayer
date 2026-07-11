@@ -24,26 +24,17 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.play_circle_fill, size: 120, color: Theme.of(context).colorScheme.onPrimary),
-            const SizedBox(height: 16),
-            Text(
-              'Cplayer',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  final size = MediaQuery.of(context).size;
+
+  return SizedBox.expand(
+  child: FittedBox(
+    fit: BoxFit.contain,
+    child: Image.asset(
+      'assets/splash_logo.png',
+    ),
+  ),
+  );
+}
 }

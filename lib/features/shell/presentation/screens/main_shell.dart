@@ -16,21 +16,25 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
 
-  final _screens = const [
-    HomeScreen(),
-    MusicTabScreen(),
-    VideoTabScreen(),
-    PlaylistTabScreen(),
-    MoreTabScreen(),
-  ];
+  void _goToTab(int index) {
+    setState(() => _index = index);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      HomeScreen(onNavigateToTab: _goToTab),
+      const MusicTabScreen(),
+      const VideoTabScreen(),
+      const PlaylistTabScreen(),
+      const MoreTabScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: IndexedStack(index: _index, children: screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
+        onTap: _goToTab,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.music_note_rounded), label: 'Music'),
