@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Model: merepresentasikan 1 lagu.
-/// Karena scope saat ini masih dummy data (belum ada file audio asli),
-/// [coverColor] dipakai sebagai pengganti thumbnail/cover art.
 class SongModel {
   final String id;
   final String title;
   final String artist;
-  final String duration; // format tampilan, mis. "3:20"
-  final int durationSeconds; // dipakai untuk seekbar/progress
+  final String duration;
+  final int durationSeconds;
   final Color coverColor;
   final bool isFavorite;
+  final String audioUrl;
 
   const SongModel({
     required this.id,
@@ -20,6 +18,7 @@ class SongModel {
     required this.durationSeconds,
     required this.coverColor,
     this.isFavorite = false,
+    required this.audioUrl,
   });
 
   SongModel copyWith({
@@ -30,6 +29,7 @@ class SongModel {
     int? durationSeconds,
     Color? coverColor,
     bool? isFavorite,
+    String? audioUrl,
   }) {
     return SongModel(
       id: id ?? this.id,
@@ -39,6 +39,7 @@ class SongModel {
       durationSeconds: durationSeconds ?? this.durationSeconds,
       coverColor: coverColor ?? this.coverColor,
       isFavorite: isFavorite ?? this.isFavorite,
+      audioUrl: audioUrl ?? this.audioUrl,
     );
   }
 }

@@ -20,7 +20,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recentSongs = ref.watch(recentlyPlayedProvider);
-    final playlists = ref.watch(playlistControllerProvider);
+    final playlists = ref.watch(playlistsProvider);
+    final totalSongs = ref.watch(musicControllerProvider).length;
     final currentSong = ref.watch(playerControllerProvider).currentSong;
 
     return SafeArea(
@@ -79,7 +80,7 @@ class HomeScreen extends ConsumerWidget {
             children: [
               QuickAccessCard(
                 title: 'Music',
-                subtitle: '${DummyData.songs.length} songs',
+                subtitle: '$totalSongs songs',
                 icon: Icons.music_note_rounded,
                 gradient: AppColors.musicCardGradient,
                 onTap: () =>
@@ -105,14 +106,24 @@ class HomeScreen extends ConsumerWidget {
                 ref.read(navigationControllerProvider.notifier).state = 1,
           ),
           const SizedBox(height: 8),
-          ...recentSongs.map(
-            (song) => SongTile(
-              song: song,
-              isPlaying: currentSong?.id == song.id,
-              onTap: () =>
-                  ref.read(playerControllerProvider.notifier).playSong(song),
+          if (recentSongs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'Belum ada lagu yang diputar. Import lagu di tab Music dulu.',
+                style: AppTextStyles.caption,
+              ),
+            )
+          else
+            ...recentSongs.map(
+              (song) => SongTile(
+                song: song,
+                isPlaying: currentSong?.id == song.id,
+                onTap: () => ref
+                    .read(playerControllerProvider.notifier)
+                    .playSong(song),
+              ),
             ),
-          ),
           const SizedBox(height: 16),
 
           // ---------- Playlists ----------

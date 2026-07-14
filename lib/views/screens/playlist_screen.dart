@@ -12,7 +12,7 @@ class PlaylistScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playlists = ref.watch(playlistControllerProvider);
+    final playlists = ref.watch(playlistsProvider);
 
     return SafeArea(
       child: Column(

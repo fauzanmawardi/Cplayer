@@ -19,10 +19,57 @@ class MusicScreen extends ConsumerStatefulWidget {
 class _MusicScreenState extends ConsumerState<MusicScreen> {
   final List<String> _tabs = const ['Songs', 'Albums', 'Artists', 'Folders'];
   int _activeTab = 0;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _openSearch() {
+    setState(() => _isSearching = true);
+  }
+
+  void _closeSearch() {
+    _searchController.clear();
+    ref.read(musicControllerProvider.notifier).search('');
+    setState(() => _isSearching = false);
+  }
+
+  Future<void> _importSongs() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      ),
+    );
+
+    final count =
+        await ref.read(musicControllerProvider.notifier).importFromDevice();
+
+    if (!mounted) return;
+    Navigator.of(context).pop(); // tutup loading dialog
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          count > 0
+              ? '$count lagu berhasil diimport'
+              : 'Tidak ada lagu baru yang dipilih',
+        ),
+        backgroundColor: AppColors.surfaceLight,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final songs = ref.watch(musicControllerProvider);
+    ref.watch(musicControllerProvider); // trigger rebuild saat search/favorite berubah
+    final musicController = ref.read(musicControllerProvider.notifier);
+    final songs = musicController.filteredSongs;
     final currentSong = ref.watch(playerControllerProvider).currentSong;
 
     // Kelompokkan lagu berdasarkan huruf awal judul (mis. "A", "B", ...)
@@ -39,14 +86,56 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
           // ---------- Header ----------
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
-                Text('Music', style: AppTextStyles.heading),
-                const Icon(Icons.search, color: AppColors.textPrimary),
-              ],
-            ),
+            child: _isSearching
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          autofocus: true,
+                          style: AppTextStyles.body,
+                          cursorColor: AppColors.accent,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: 'Cari judul atau artis...',
+                            hintStyle: AppTextStyles.caption,
+                            border: InputBorder.none,
+                          ),
+                          onChanged: (value) => ref
+                              .read(musicControllerProvider.notifier)
+                              .search(value),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _closeSearch,
+                        icon: const Icon(Icons.close,
+                            color: AppColors.textPrimary),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Icon(Icons.menu_rounded,
+                          color: AppColors.textPrimary),
+                      Text('Music', style: AppTextStyles.heading),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _importSongs,
+                            child: const Icon(Icons.add_circle_outline,
+                                color: AppColors.textPrimary),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: _openSearch,
+                            child: const Icon(Icons.search,
+                                color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
           ),
           const SizedBox(height: 12),
 
@@ -91,7 +180,43 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
           // ---------- Konten ----------
           Expanded(
             child: _activeTab == 0
-                ? ListView(
+                ? (songs.isEmpty
+                    ? Center(
+                        child: musicController.allSongs.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 32),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.library_music_outlined,
+                                        color: AppColors.textMuted, size: 48),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Belum ada lagu.\nImport lagu dari device kamu dulu.',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.caption,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: _importSongs,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.accent,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(24)),
+                                      ),
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Import dari Device'),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Text('Lagu tidak ditemukan',
+                                style: AppTextStyles.caption),
+                      )
+                    : ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                     children: [
                       // Shuffle Play row
@@ -106,7 +231,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                             style: AppTextStyles.caption),
                         onTap: () {
                           if (songs.isNotEmpty) {
-                            final random = songs..shuffle();
+                            final random = [...songs]..shuffle();
                             ref
                                 .read(playerControllerProvider.notifier)
                                 .playSong(random.first);
@@ -137,7 +262,7 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                       ],
                       const SizedBox(height: 80),
                     ],
-                  )
+                  ))
                 : Center(
                     child: Text(
                       '${_tabs[_activeTab]} - segera hadir',
