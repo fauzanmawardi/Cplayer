@@ -18,6 +18,33 @@ class VideoScreen extends ConsumerStatefulWidget {
 class _VideoScreenState extends ConsumerState<VideoScreen> {
   final List<String> _categories = const ['All', 'Movies', 'TV Shows', 'Videos'];
 
+  Future<void> _importVideos(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      ),
+    );
+
+    final count =
+        await ref.read(videoControllerProvider.notifier).importFromDevice();
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          count > 0
+              ? '$count video berhasil diimport'
+              : 'Tidak ada video baru yang dipilih',
+        ),
+        backgroundColor: AppColors.surfaceLight,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(videoControllerProvider.notifier);
@@ -36,54 +63,89 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
               children: [
                 const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
                 Text('Video', style: AppTextStyles.heading),
-                const Icon(Icons.search, color: AppColors.textPrimary),
+                GestureDetector(
+                  onTap: () => _importVideos(context),
+                  child: const Icon(Icons.add_circle_outline,
+                      color: AppColors.textPrimary),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 12),
 
           // ---------- Kategori (chip tabs) ----------
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, i) {
-                final category = _categories[i];
-                final isActive = category == activeCategory;
-                return GestureDetector(
-                  onTap: () => controller.setCategory(category),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.accent : AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      category,
-                      style: AppTextStyles.caption.copyWith(
-                        color: isActive
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
+          // SizedBox(
+          //   height: 36,
+          //   child: ListView.separated(
+          //     padding: const EdgeInsets.symmetric(horizontal: 18),
+          //     scrollDirection: Axis.horizontal,
+          //     itemCount: _categories.length,
+          //     separatorBuilder: (_, __) => const SizedBox(width: 10),
+          //     itemBuilder: (context, i) {
+          //       final category = _categories[i];
+          //       final isActive = category == activeCategory;
+          //       return GestureDetector(
+          //         onTap: () => controller.setCategory(category),
+          //         child: Container(
+          //           padding:
+          //               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          //           decoration: BoxDecoration(
+          //             color: isActive ? AppColors.accent : AppColors.surface,
+          //             borderRadius: BorderRadius.circular(20),
+          //           ),
+          //           child: Text(
+          //             category,
+          //             style: AppTextStyles.caption.copyWith(
+          //               color: isActive
+          //                   ? AppColors.textPrimary
+          //                   : AppColors.textSecondary,
+          //               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          //             ),
+          //           ),
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
 
           // ---------- List video ----------
           Expanded(
             child: videos.isEmpty
                 ? Center(
-                    child: Text('Belum ada video di kategori ini',
-                        style: AppTextStyles.caption),
+                    child: controller.allVideos.isEmpty
+                        ? Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.video_library_outlined,
+                                    color: AppColors.textMuted, size: 48),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Belum ada video.\nImport video dari device kamu dulu.',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.caption,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () => _importVideos(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.accent,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(24)),
+                                  ),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Import dari Device'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Text('Belum ada video di kategori ini',
+                            style: AppTextStyles.caption),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 18),

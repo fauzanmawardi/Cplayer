@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Model: merepresentasikan 1 video.
-/// [category] contoh: "Movies", "TV Shows", "Videos" (dipakai untuk filter tab).
-/// [quality] contoh: "8K Video", "4K Video", "1080p".
+/// [sourcePath] adalah path file video asli di device yang benar-benar
+/// diputar oleh video_player (hasil import lewat VideoController.importFromDevice()).
 class VideoModel {
   final String id;
   final String title;
@@ -12,6 +12,7 @@ class VideoModel {
   final int durationSeconds;
   final Color thumbColor;
   final bool isFavorite;
+  final String sourcePath;
 
   const VideoModel({
     required this.id,
@@ -21,6 +22,7 @@ class VideoModel {
     required this.duration,
     required this.durationSeconds,
     required this.thumbColor,
+    required this.sourcePath,
     this.isFavorite = false,
   });
 
@@ -33,6 +35,7 @@ class VideoModel {
     int? durationSeconds,
     Color? thumbColor,
     bool? isFavorite,
+    String? sourcePath,
   }) {
     return VideoModel(
       id: id ?? this.id,
@@ -43,6 +46,7 @@ class VideoModel {
       durationSeconds: durationSeconds ?? this.durationSeconds,
       thumbColor: thumbColor ?? this.thumbColor,
       isFavorite: isFavorite ?? this.isFavorite,
+      sourcePath: sourcePath ?? this.sourcePath,
     );
   }
 }

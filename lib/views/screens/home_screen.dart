@@ -4,7 +4,7 @@ import '../../controllers/music_controller.dart';
 import '../../controllers/navigation_controller.dart';
 import '../../controllers/player_controller.dart';
 import '../../controllers/playlist_controller.dart';
-import '../../data/dummy_data.dart';
+import '../../controllers/video_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../widgets/playlist_card.dart';
@@ -22,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
     final recentSongs = ref.watch(recentlyPlayedProvider);
     final playlists = ref.watch(playlistsProvider);
     final totalSongs = ref.watch(musicControllerProvider).length;
+    final totalVideos = ref.watch(videoControllerProvider).length;
     final currentSong = ref.watch(playerControllerProvider).currentSong;
 
     return SafeArea(
@@ -89,7 +90,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               QuickAccessCard(
                 title: 'Video',
-                subtitle: '${DummyData.videos.length} videos',
+                subtitle: '$totalVideos videos',
                 icon: Icons.videocam_rounded,
                 gradient: AppColors.videoCardGradient,
                 onTap: () =>

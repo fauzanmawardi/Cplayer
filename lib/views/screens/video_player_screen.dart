@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart' as vp;
 import '../../controllers/video_controller.dart';
 import '../../controllers/video_player_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 
 /// View: halaman Now Playing untuk video (player, speed, subtitle, quality).
-class VideoPlayerScreen extends ConsumerWidget {
+class VideoPlayerScreen extends ConsumerStatefulWidget {
   const VideoPlayerScreen({super.key});
+
+  @override
+  ConsumerState<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
+  bool _isFullScreen = false;
+  
 
   String _formatTime(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -15,8 +25,37 @@ class VideoPlayerScreen extends ConsumerWidget {
     return '$m:$s';
   }
 
+  Future<void> _toggleFullScreen() async {
+    setState(() => _isFullScreen = !_isFullScreen);
+    if (_isFullScreen) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    // Pastikan orientasi & system UI kembali normal saat keluar halaman ini,
+    // supaya tidak "kebawa" landscape ke halaman lain.
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final playerState = ref.watch(videoPlayerControllerProvider);
     final video = playerState.currentVideo;
 
@@ -54,21 +93,41 @@ class VideoPlayerScreen extends ConsumerWidget {
 
               // ---------- Area Video ----------
               Expanded(
-                child: Stack(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
+                    Positioned.fill(
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          colors: [
-                            video.thumbColor.withOpacity(0.9),
-                            AppColors.background,
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
+                        child: (playerState.isInitialized &&
+                                playerState.controller != null)
+                            ? FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width: playerState.controller!.value.size.width,
+                                  height:
+                                      playerState.controller!.value.size.height,
+                                  child: vp.VideoPlayer(playerState.controller!),
+                                ),
+                              )
+                            : Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      video.thumbColor.withOpacity(0.9),
+                                      AppColors.background,
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white),
+                                ),
+                              ),
                       ),
                     ),
                     IconButton(
@@ -122,6 +181,7 @@ class VideoPlayerScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                ),
               ),
               const SizedBox(height: 8),
 
@@ -157,7 +217,7 @@ class VideoPlayerScreen extends ConsumerWidget {
                 children: [
                   const Icon(Icons.lock_outline, color: AppColors.textSecondary),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () => ref.read(videoPlayerControllerProvider.notifier).playPrevious(),
                     icon: const Icon(Icons.skip_previous_rounded,
                         color: AppColors.textPrimary, size: 30),
                   ),
@@ -180,11 +240,20 @@ class VideoPlayerScreen extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () => ref.read(videoPlayerControllerProvider.notifier).playNext(),
                     icon: const Icon(Icons.skip_next_rounded,
                         color: AppColors.textPrimary, size: 30),
                   ),
-                  const Icon(Icons.fullscreen, color: AppColors.textSecondary),
+                  IconButton(
+                     onPressed: _toggleFullScreen,
+                     icon: Icon(
+                     _isFullScreen
+                     ? Icons.fullscreen_exit
+                     : Icons.fullscreen,
+                     color: AppColors.textSecondary,
+                     ),
+                  ),
+                //  const Icon(Icons.fullscreen, color: AppColors.textSecondary),
                 ],
               ),
               const SizedBox(height: 14),
