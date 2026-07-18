@@ -17,7 +17,6 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   bool _isFullScreen = false;
-  
 
   String _formatTime(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -69,6 +68,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       );
     }
 
+    if (_isFullScreen) {
+      return _buildFullScreenView(video, playerState);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -95,92 +98,17 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               Expanded(
                 child: SizedBox(
                   width: double.infinity,
-                  child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: (playerState.isInitialized &&
-                                playerState.controller != null)
-                            ? FittedBox(
-                                fit: BoxFit.cover,
-                                child: SizedBox(
-                                  width: playerState.controller!.value.size.width,
-                                  height:
-                                      playerState.controller!.value.size.height,
-                                  child: vp.VideoPlayer(playerState.controller!),
-                                ),
-                              )
-                            : Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      video.thumbColor.withOpacity(0.9),
-                                      AppColors.background,
-                                    ],
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                  ),
-                                ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white),
-                                ),
-                              ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => ref
-                          .read(videoPlayerControllerProvider.notifier)
-                          .togglePlayPause(),
-                      icon: Icon(
-                        playerState.isPlaying
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_fill,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 64,
-                      ),
-                    ),
-                    // Progress overlay di bawah area video
-                    Positioned(
-                      left: 8,
-                      right: 8,
-                      bottom: 8,
-                      child: Row(
-                        children: [
-                          Text(_formatTime(playerState.positionSeconds),
-                              style: AppTextStyles.caption
-                                  .copyWith(color: Colors.white)),
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                trackHeight: 3,
-                                thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 5),
-                              ),
-                              child: Slider(
-                                value: playerState.positionSeconds
-                                    .clamp(0, video.durationSeconds)
-                                    .toDouble(),
-                                max: video.durationSeconds.toDouble(),
-                                activeColor: AppColors.favorite,
-                                inactiveColor: Colors.white24,
-                                onChanged: (value) => ref
-                                    .read(videoPlayerControllerProvider
-                                        .notifier)
-                                    .seekTo(value.toInt()),
-                              ),
-                            ),
-                          ),
-                          Text(video.duration,
-                              style: AppTextStyles.caption
-                                  .copyWith(color: Colors.white)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  child: _VideoSurface(
+                    video: video,
+                    playerState: playerState,
+                    onTogglePlayPause: () => ref
+                        .read(videoPlayerControllerProvider.notifier)
+                        .togglePlayPause(),
+                    onSeek: (value) => ref
+                        .read(videoPlayerControllerProvider.notifier)
+                        .seekTo(value),
+                    formatTime: _formatTime,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -217,7 +145,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                 children: [
                   const Icon(Icons.lock_outline, color: AppColors.textSecondary),
                   IconButton(
-                    onPressed: () => ref.read(videoPlayerControllerProvider.notifier).playPrevious(),
+                    onPressed: () => ref
+                        .read(videoPlayerControllerProvider.notifier)
+                        .playPrevious(),
                     icon: const Icon(Icons.skip_previous_rounded,
                         color: AppColors.textPrimary, size: 30),
                   ),
@@ -240,20 +170,17 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => ref.read(videoPlayerControllerProvider.notifier).playNext(),
+                    onPressed: () => ref
+                        .read(videoPlayerControllerProvider.notifier)
+                        .playNext(),
                     icon: const Icon(Icons.skip_next_rounded,
                         color: AppColors.textPrimary, size: 30),
                   ),
-                  IconButton(
-                     onPressed: _toggleFullScreen,
-                     icon: Icon(
-                     _isFullScreen
-                     ? Icons.fullscreen_exit
-                     : Icons.fullscreen,
-                     color: AppColors.textSecondary,
-                     ),
+                  GestureDetector(
+                    onTap: _toggleFullScreen,
+                    child: const Icon(Icons.fullscreen,
+                        color: AppColors.textSecondary),
                   ),
-                //  const Icon(Icons.fullscreen, color: AppColors.textSecondary),
                 ],
               ),
               const SizedBox(height: 14),
@@ -302,6 +229,196 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Tampilan khusus fullscreen: video mengisi SELURUH layar (landscape),
+  /// tanpa header/title/speed-row - cuma overlay kontrol minimal.
+  Widget _buildFullScreenView(video, playerState) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SizedBox.expand(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: _VideoSurface(
+                video: video,
+                playerState: playerState,
+                onTogglePlayPause: () => ref
+                    .read(videoPlayerControllerProvider.notifier)
+                    .togglePlayPause(),
+                onSeek: (value) => ref
+                    .read(videoPlayerControllerProvider.notifier)
+                    .seekTo(value),
+                formatTime: _formatTime,
+                borderRadius: 0,
+              ),
+            ),
+            // Tombol keluar fullscreen
+            Positioned(
+              top: 16,
+              left: 16,
+              child: SafeArea(
+                child: GestureDetector(
+                  onTap: _toggleFullScreen,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.fullscreen_exit,
+                        color: Colors.white, size: 24),
+                  ),
+                ),
+              ),
+            ),
+            // Kontrol prev/play/next di tengah bawah
+            Positioned(
+              bottom: 36,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => ref
+                        .read(videoPlayerControllerProvider.notifier)
+                        .playPrevious(),
+                    icon: const Icon(Icons.skip_previous_rounded,
+                        color: Colors.white, size: 34),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: () => ref
+                          .read(videoPlayerControllerProvider.notifier)
+                          .togglePlayPause(),
+                      icon: Icon(
+                        playerState.isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 34,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: () => ref
+                        .read(videoPlayerControllerProvider.notifier)
+                        .playNext(),
+                    icon: const Icon(Icons.skip_next_rounded,
+                        color: Colors.white, size: 34),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget reusable: area video (dipakai di mode normal & fullscreen)
+/// supaya tidak duplikasi kode Stack + FittedBox + progress overlay.
+class _VideoSurface extends StatelessWidget {
+  final dynamic video;
+  final dynamic playerState;
+  final VoidCallback onTogglePlayPause;
+  final ValueChanged<int> onSeek;
+  final String Function(int) formatTime;
+  final double borderRadius;
+
+  const _VideoSurface({
+    required this.video,
+    required this.playerState,
+    required this.onTogglePlayPause,
+    required this.onSeek,
+    required this.formatTime,
+    this.borderRadius = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: (playerState.isInitialized && playerState.controller != null)
+                ? FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: playerState.controller!.value.size.width,
+                      height: playerState.controller!.value.size.height,
+                      child: vp.VideoPlayer(playerState.controller!),
+                    ),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          video.thumbColor.withOpacity(0.9),
+                          AppColors.background,
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+          ),
+        ),
+        IconButton(
+          onPressed: onTogglePlayPause,
+          icon: Icon(
+            playerState.isPlaying
+                ? Icons.pause_circle_filled
+                : Icons.play_circle_fill,
+            color: Colors.white.withOpacity(0.9),
+            size: 64,
+          ),
+        ),
+        Positioned(
+          left: 8,
+          right: 8,
+          bottom: 8,
+          child: Row(
+            children: [
+              Text(formatTime(playerState.positionSeconds),
+                  style: AppTextStyles.caption.copyWith(color: Colors.white)),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3,
+                    thumbShape:
+                        const RoundSliderThumbShape(enabledThumbRadius: 5),
+                  ),
+                  child: Slider(
+                    value: (playerState.positionSeconds as int)
+                        .clamp(0, video.durationSeconds)
+                        .toDouble(),
+                    max: video.durationSeconds.toDouble(),
+                    activeColor: AppColors.favorite,
+                    inactiveColor: Colors.white24,
+                    onChanged: (value) => onSeek(value.toInt()),
+                  ),
+                ),
+              ),
+              Text(video.duration,
+                  style: AppTextStyles.caption.copyWith(color: Colors.white)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
