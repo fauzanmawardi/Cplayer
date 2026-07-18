@@ -5,6 +5,7 @@ import '../../controllers/video_player_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../widgets/video_tile.dart';
+import '../widgets/confirm_dialog.dart';
 import 'video_player_screen.dart';
 
 /// View: halaman daftar video (All/Movies/TV Shows/Videos).
@@ -74,40 +75,40 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           const SizedBox(height: 12),
 
           // ---------- Kategori (chip tabs) ----------
-          // SizedBox(
-          //   height: 36,
-          //   child: ListView.separated(
-          //     padding: const EdgeInsets.symmetric(horizontal: 18),
-          //     scrollDirection: Axis.horizontal,
-          //     itemCount: _categories.length,
-          //     separatorBuilder: (_, __) => const SizedBox(width: 10),
-          //     itemBuilder: (context, i) {
-          //       final category = _categories[i];
-          //       final isActive = category == activeCategory;
-          //       return GestureDetector(
-          //         onTap: () => controller.setCategory(category),
-          //         child: Container(
-          //           padding:
-          //               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          //           decoration: BoxDecoration(
-          //             color: isActive ? AppColors.accent : AppColors.surface,
-          //             borderRadius: BorderRadius.circular(20),
-          //           ),
-          //           child: Text(
-          //             category,
-          //             style: AppTextStyles.caption.copyWith(
-          //               color: isActive
-          //                   ? AppColors.textPrimary
-          //                   : AppColors.textSecondary,
-          //               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-          //             ),
-          //           ),
-          //         ),
-          //       );
-          //     },
-          //   ),
-          // ),
-          // const SizedBox(height: 12),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final category = _categories[i];
+                final isActive = category == activeCategory;
+                return GestureDetector(
+                  onTap: () => controller.setCategory(category),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppColors.accent : AppColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      category,
+                      style: AppTextStyles.caption.copyWith(
+                        color: isActive
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // ---------- List video ----------
           Expanded(
@@ -167,6 +168,19 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                         onMoreTap: () => ref
                             .read(videoControllerProvider.notifier)
                             .toggleFavorite(video.id),
+                        onLongPress: () async {
+                          final confirmed = await showConfirmDialog(
+                            context,
+                            title: 'Hapus Video?',
+                            message:
+                                '"${video.title}" akan dihapus dari library CPlayer (file di device tidak ikut terhapus).',
+                          );
+                          if (confirmed) {
+                            ref
+                                .read(videoControllerProvider.notifier)
+                                .removeVideo(video.id);
+                          }
+                        },
                       );
                     },
                   ),

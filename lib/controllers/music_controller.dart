@@ -1,16 +1,23 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart' as ja;
+import 'playlist_controller.dart';
 import '../models/song_model.dart';
 import '../utils/app_colors.dart';
 
-
+/// Controller: mengelola daftar lagu ASLI yang diimport dari device.
+/// - search query & filter
+/// - toggle favorite
+/// - import file audio dari penyimpanan device (pakai file_picker)
+/// - catat riwayat "recently played"
 class MusicController extends StateNotifier<List<SongModel>> {
-  MusicController() : super([]);
+  final Ref ref;
+  MusicController(this.ref) : super([]);
 
   String _query = '';
   String get query => _query;
 
+  // Riwayat id lagu yang baru diputar (terbaru di depan), maksimal 5.
   final List<String> _recentlyPlayedIds = [];
 
   List<SongModel> get allSongs => state;
@@ -66,6 +73,17 @@ class MusicController extends StateNotifier<List<SongModel>> {
   void removeSong(String id) {
     state = state.where((s) => s.id != id).toList();
     _recentlyPlayedIds.remove(id);
+
+    // Bersihkan juga dari semua playlist custom (Chill Vibes, Workout, dll)
+    // supaya tidak ada lagu "hantu" yang sudah dihapus tapi masih nyangkut
+    // di playlist. Favorites tidak perlu dibersihkan manual karena isinya
+    // otomatis mengikuti list lagu (lihat playlistsProvider).
+    final playlistController = ref.read(playlistControllerProvider.notifier);
+    for (final playlist in ref.read(playlistControllerProvider)) {
+      if (playlist.id != 'p1') {
+        playlistController.removeSongFromPlaylist(playlist.id, id);
+      }
+    }
   }
 
   /// Buka file picker device untuk memilih 1 atau banyak file audio,
@@ -126,9 +144,11 @@ class MusicController extends StateNotifier<List<SongModel>> {
 
 final musicControllerProvider =
     StateNotifierProvider<MusicController, List<SongModel>>((ref) {
-  return MusicController();
+  return MusicController(ref);
 });
 
+/// "Recently Played" untuk Home - berdasarkan riwayat lagu yang benar-benar
+/// pernah diputar di sesi ini (bukan dummy statis lagi).
 final recentlyPlayedProvider = Provider<List<SongModel>>((ref) {
   ref.watch(musicControllerProvider); // trigger rebuild
   return ref.read(musicControllerProvider.notifier).recentlyPlayed;

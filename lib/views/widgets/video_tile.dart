@@ -8,18 +8,21 @@ class VideoTile extends StatelessWidget {
   final VideoModel video;
   final VoidCallback onTap;
   final VoidCallback? onMoreTap;
+  final VoidCallback? onLongPress;
 
   const VideoTile({
     super.key,
     required this.video,
     required this.onTap,
     this.onMoreTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),

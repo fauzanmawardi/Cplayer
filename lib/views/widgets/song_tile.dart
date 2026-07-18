@@ -9,6 +9,7 @@ class SongTile extends StatelessWidget {
   final SongModel song;
   final VoidCallback onTap;
   final VoidCallback? onMoreTap;
+  final VoidCallback? onLongPress;
   final int? index; // untuk nomor urut di playlist detail (opsional)
   final bool isPlaying;
 
@@ -17,6 +18,7 @@ class SongTile extends StatelessWidget {
     required this.song,
     required this.onTap,
     this.onMoreTap,
+    this.onLongPress,
     this.index,
     this.isPlaying = false,
   });
@@ -25,6 +27,7 @@ class SongTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),

@@ -7,6 +7,7 @@ import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../widgets/song_tile.dart';
 import '../widgets/add_to_playlist_sheet.dart';
+import '../widgets/confirm_dialog.dart';
 
 /// View: halaman daftar lagu (Songs/Albums/Artists/Folders).
 /// Hanya tab "Songs" yang fungsional untuk saat ini (sesuai scope UI+dummy).
@@ -258,6 +259,19 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                                 .playSong(song),
                             onMoreTap: () =>
                                 showAddToPlaylistSheet(context, song),
+                            onLongPress: () async {
+                              final confirmed = await showConfirmDialog(
+                                context,
+                                title: 'Hapus Lagu?',
+                                message:
+                                    '"${song.title}" akan dihapus dari library CPlayer (file di device tidak ikut terhapus).',
+                              );
+                              if (confirmed) {
+                                ref
+                                    .read(musicControllerProvider.notifier)
+                                    .removeSong(song.id);
+                              }
+                            },
                           ),
                       ],
                       const SizedBox(height: 80),
