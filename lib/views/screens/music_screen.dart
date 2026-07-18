@@ -6,6 +6,7 @@ import '../../models/song_model.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../widgets/song_tile.dart';
+import '../widgets/add_to_playlist_sheet.dart';
 
 /// View: halaman daftar lagu (Songs/Albums/Artists/Folders).
 /// Hanya tab "Songs" yang fungsional untuk saat ini (sesuai scope UI+dummy).
@@ -140,42 +141,42 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
           const SizedBox(height: 12),
 
           // ---------- Tabs ----------
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 18),
-          //   child: Row(
-          //     children: List.generate(_tabs.length, (i) {
-          //       final isActive = i == _activeTab;
-          //       return Padding(
-          //         padding: const EdgeInsets.only(right: 22),
-          //         child: GestureDetector(
-          //           onTap: () => setState(() => _activeTab = i),
-          //           child: Column(
-          //             children: [
-          //               Text(
-          //                 _tabs[i],
-          //                 style: AppTextStyles.body.copyWith(
-          //                   color: isActive
-          //                       ? AppColors.favorite
-          //                       : AppColors.textSecondary,
-          //                   fontWeight:
-          //                       isActive ? FontWeight.w600 : FontWeight.w400,
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 6),
-          //               if (isActive)
-          //                 Container(
-          //                   height: 2,
-          //                   width: 24,
-          //                   color: AppColors.favorite,
-          //                 ),
-          //             ],
-          //           ),
-          //         ),
-          //       );
-          //     }),
-          //   ),
-          // ),
-          // const Divider(color: AppColors.divider, height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              children: List.generate(_tabs.length, (i) {
+                final isActive = i == _activeTab;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 22),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeTab = i),
+                    child: Column(
+                      children: [
+                        Text(
+                          _tabs[i],
+                          style: AppTextStyles.body.copyWith(
+                            color: isActive
+                                ? AppColors.favorite
+                                : AppColors.textSecondary,
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        if (isActive)
+                          Container(
+                            height: 2,
+                            width: 24,
+                            color: AppColors.favorite,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+          const Divider(color: AppColors.divider, height: 20),
 
           // ---------- Konten ----------
           Expanded(
@@ -255,9 +256,8 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                             onTap: () => ref
                                 .read(playerControllerProvider.notifier)
                                 .playSong(song),
-                            onMoreTap: () => ref
-                                .read(musicControllerProvider.notifier)
-                                .toggleFavorite(song.id),
+                            onMoreTap: () =>
+                                showAddToPlaylistSheet(context, song),
                           ),
                       ],
                       const SizedBox(height: 80),

@@ -5,8 +5,8 @@ import '../../models/playlist_model.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../widgets/song_tile.dart';
+import '../widgets/add_to_playlist_sheet.dart';
 
-/// View: halaman detail 1 playlist (mis. "Favorites") + daftar lagu.
 class PlaylistDetailScreen extends ConsumerWidget {
   final PlaylistModel playlist;
 
@@ -135,6 +135,8 @@ class PlaylistDetailScreen extends ConsumerWidget {
                       onTap: () => ref
                           .read(playerControllerProvider.notifier)
                           .playSong(playlist.songs[i]),
+                      onMoreTap: () => showAddToPlaylistSheet(
+                          context, playlist.songs[i]),
                     ),
                   const SizedBox(height: 90),
                 ],
