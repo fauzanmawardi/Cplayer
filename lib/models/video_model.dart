@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Model: merepresentasikan 1 video.
-/// [sourcePath] adalah path file video asli di device yang benar-benar
-/// diputar oleh video_player (hasil import lewat VideoController.importFromDevice()).
 class VideoModel {
   final String id;
   final String title;
@@ -13,8 +10,9 @@ class VideoModel {
   final Color thumbColor;
   final bool isFavorite;
   final String sourcePath;
+  final DateTime addedAt;
 
-  const VideoModel({
+  VideoModel({
     required this.id,
     required this.title,
     required this.category,
@@ -23,8 +21,9 @@ class VideoModel {
     required this.durationSeconds,
     required this.thumbColor,
     required this.sourcePath,
+    DateTime? addedAt,
     this.isFavorite = false,
-  });
+  }) : addedAt = addedAt ?? DateTime.now();
 
   VideoModel copyWith({
     String? id,
@@ -36,6 +35,7 @@ class VideoModel {
     Color? thumbColor,
     bool? isFavorite,
     String? sourcePath,
+    DateTime? addedAt,
   }) {
     return VideoModel(
       id: id ?? this.id,
@@ -47,6 +47,7 @@ class VideoModel {
       thumbColor: thumbColor ?? this.thumbColor,
       isFavorite: isFavorite ?? this.isFavorite,
       sourcePath: sourcePath ?? this.sourcePath,
+      addedAt: addedAt ?? this.addedAt,
     );
   }
 }

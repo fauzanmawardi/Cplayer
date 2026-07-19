@@ -4,22 +4,24 @@ class SongModel {
   final String id;
   final String title;
   final String artist;
-  final String duration;
-  final int durationSeconds;
+  final String duration; // format tampilan, mis. "3:20"
+  final int durationSeconds; // dipakai untuk seekbar/progress
   final Color coverColor;
   final bool isFavorite;
   final String audioUrl;
+  final DateTime addedAt;
 
-  const SongModel({
+  SongModel({
     required this.id,
     required this.title,
     required this.artist,
     required this.duration,
     required this.durationSeconds,
     required this.coverColor,
-    this.isFavorite = false,
     required this.audioUrl,
-  });
+    DateTime? addedAt,
+    this.isFavorite = false,
+  }) : addedAt = addedAt ?? DateTime.now();
 
   SongModel copyWith({
     String? id,
@@ -30,6 +32,7 @@ class SongModel {
     Color? coverColor,
     bool? isFavorite,
     String? audioUrl,
+    DateTime? addedAt,
   }) {
     return SongModel(
       id: id ?? this.id,
@@ -40,6 +43,7 @@ class SongModel {
       coverColor: coverColor ?? this.coverColor,
       isFavorite: isFavorite ?? this.isFavorite,
       audioUrl: audioUrl ?? this.audioUrl,
+      addedAt: addedAt ?? this.addedAt,
     );
   }
 }

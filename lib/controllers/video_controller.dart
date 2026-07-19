@@ -5,6 +5,9 @@ import 'package:video_player/video_player.dart' as vp;
 import '../models/video_model.dart';
 import '../utils/app_colors.dart';
 
+/// Opsi urutan tampilan daftar video.
+enum VideoSortOption { titleAsc, durationAsc, recentlyAdded }
+
 /// Controller: mengelola daftar video ASLI yang diimport dari device.
 class VideoController extends StateNotifier<List<VideoModel>> {
   VideoController() : super([]);
@@ -12,15 +15,38 @@ class VideoController extends StateNotifier<List<VideoModel>> {
   String _category = 'All';
   String get category => _category;
 
+  VideoSortOption _sortOption = VideoSortOption.recentlyAdded;
+  VideoSortOption get sortOption => _sortOption;
+
   List<VideoModel> get allVideos => state;
 
   List<VideoModel> get filteredVideos {
-    if (_category == 'All') return state;
-    return state.where((v) => v.category == _category).toList();
+    List<VideoModel> result = _category == 'All'
+        ? [...state]
+        : state.where((v) => v.category == _category).toList();
+
+    switch (_sortOption) {
+      case VideoSortOption.titleAsc:
+        result.sort(
+            (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        break;
+      case VideoSortOption.durationAsc:
+        result.sort((a, b) => a.durationSeconds.compareTo(b.durationSeconds));
+        break;
+      case VideoSortOption.recentlyAdded:
+        result.sort((a, b) => b.addedAt.compareTo(a.addedAt));
+        break;
+    }
+    return result;
   }
 
   void setCategory(String category) {
     _category = category;
+    state = [...state];
+  }
+
+  void setSortOption(VideoSortOption option) {
+    _sortOption = option;
     state = [...state];
   }
 

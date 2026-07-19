@@ -5,8 +5,12 @@ import 'playlist_controller.dart';
 import '../models/song_model.dart';
 import '../utils/app_colors.dart';
 
+/// Opsi urutan tampilan daftar lagu di Music screen.
+enum SortOption { titleAsc, durationAsc, recentlyAdded }
+
 /// Controller: mengelola daftar lagu ASLI yang diimport dari device.
 /// - search query & filter
+/// - sort (nama, durasi, terbaru ditambah)
 /// - toggle favorite
 /// - import file audio dari penyimpanan device (pakai file_picker)
 /// - catat riwayat "recently played"
@@ -17,18 +21,41 @@ class MusicController extends StateNotifier<List<SongModel>> {
   String _query = '';
   String get query => _query;
 
+  SortOption _sortOption = SortOption.recentlyAdded;
+  SortOption get sortOption => _sortOption;
+
   // Riwayat id lagu yang baru diputar (terbaru di depan), maksimal 5.
   final List<String> _recentlyPlayedIds = [];
 
   List<SongModel> get allSongs => state;
 
   List<SongModel> get filteredSongs {
-    if (_query.trim().isEmpty) return state;
-    return state
-        .where((song) =>
-            song.title.toLowerCase().contains(_query.toLowerCase()) ||
-            song.artist.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
+    List<SongModel> result = _query.trim().isEmpty
+        ? [...state]
+        : state
+            .where((song) =>
+                song.title.toLowerCase().contains(_query.toLowerCase()) ||
+                song.artist.toLowerCase().contains(_query.toLowerCase()))
+            .toList();
+
+    switch (_sortOption) {
+      case SortOption.titleAsc:
+        result.sort(
+            (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        break;
+      case SortOption.durationAsc:
+        result.sort((a, b) => a.durationSeconds.compareTo(b.durationSeconds));
+        break;
+      case SortOption.recentlyAdded:
+        result.sort((a, b) => b.addedAt.compareTo(a.addedAt));
+        break;
+    }
+    return result;
+  }
+
+  void setSortOption(SortOption option) {
+    _sortOption = option;
+    state = [...state]; // trigger rebuild
   }
 
   List<SongModel> get recentlyPlayed {

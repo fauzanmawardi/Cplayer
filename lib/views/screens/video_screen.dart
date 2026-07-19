@@ -46,6 +46,58 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     );
   }
 
+  Future<void> _showSortSheet(BuildContext context) async {
+    final controller = ref.read(videoControllerProvider.notifier);
+    final current = controller.sortOption;
+
+    final options = [
+      _VideoSortItem(VideoSortOption.titleAsc, 'Nama (A-Z)', Icons.sort_by_alpha),
+      _VideoSortItem(VideoSortOption.durationAsc, 'Durasi (terpendek dulu)',
+          Icons.timer_outlined),
+      _VideoSortItem(VideoSortOption.recentlyAdded, 'Terbaru Ditambah',
+          Icons.new_releases_outlined),
+    ];
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Urutkan Berdasarkan',
+                      style: AppTextStyles.subheading),
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final item in options)
+                ListTile(
+                  leading: Icon(item.icon, color: AppColors.textSecondary),
+                  title: Text(item.label, style: AppTextStyles.body),
+                  trailing: current == item.sortOption
+                      ? const Icon(Icons.check, color: AppColors.accent)
+                      : null,
+                  onTap: () {
+                    controller.setSortOption(item.sortOption);
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(videoControllerProvider.notifier);
@@ -64,10 +116,20 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
               children: [
                 const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
                 Text('Video', style: AppTextStyles.heading),
-                GestureDetector(
-                  onTap: () => _importVideos(context),
-                  child: const Icon(Icons.add_circle_outline,
-                      color: AppColors.textPrimary),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _importVideos(context),
+                      child: const Icon(Icons.add_circle_outline,
+                          color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: () => _showSortSheet(context),
+                      child: const Icon(Icons.sort,
+                          color: AppColors.textPrimary),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -75,40 +137,40 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           const SizedBox(height: 12),
 
           // ---------- Kategori (chip tabs) ----------
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, i) {
-                final category = _categories[i];
-                final isActive = category == activeCategory;
-                return GestureDetector(
-                  onTap: () => controller.setCategory(category),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.accent : AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      category,
-                      style: AppTextStyles.caption.copyWith(
-                        color: isActive
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
+          // SizedBox(
+          //   height: 36,
+          //   child: ListView.separated(
+          //     padding: const EdgeInsets.symmetric(horizontal: 18),
+          //     scrollDirection: Axis.horizontal,
+          //     itemCount: _categories.length,
+          //     separatorBuilder: (_, __) => const SizedBox(width: 10),
+          //     itemBuilder: (context, i) {
+          //       final category = _categories[i];
+          //       final isActive = category == activeCategory;
+          //       return GestureDetector(
+          //         onTap: () => controller.setCategory(category),
+          //         child: Container(
+          //           padding:
+          //               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          //           decoration: BoxDecoration(
+          //             color: isActive ? AppColors.accent : AppColors.surface,
+          //             borderRadius: BorderRadius.circular(20),
+          //           ),
+          //           child: Text(
+          //             category,
+          //             style: AppTextStyles.caption.copyWith(
+          //               color: isActive
+          //                   ? AppColors.textPrimary
+          //                   : AppColors.textSecondary,
+          //               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          //             ),
+          //           ),
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
 
           // ---------- List video ----------
           Expanded(
@@ -189,4 +251,11 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
       ),
     );
   }
+}
+
+class _VideoSortItem {
+  final VideoSortOption sortOption;
+  final String label;
+  final IconData icon;
+  const _VideoSortItem(this.sortOption, this.label, this.icon);
 }

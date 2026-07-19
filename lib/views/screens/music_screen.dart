@@ -67,6 +67,58 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
     );
   }
 
+  Future<void> _showSortSheet() async {
+    final controller = ref.read(musicControllerProvider.notifier);
+    final current = controller.sortOption;
+
+    final options = [
+      _SortOptionItem(SortOption.titleAsc, 'Nama (A-Z)', Icons.sort_by_alpha),
+      _SortOptionItem(SortOption.durationAsc, 'Durasi (terpendek dulu)',
+          Icons.timer_outlined),
+      _SortOptionItem(SortOption.recentlyAdded, 'Terbaru Ditambah',
+          Icons.new_releases_outlined),
+    ];
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Urutkan Berdasarkan',
+                      style: AppTextStyles.subheading),
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final item in options)
+                ListTile(
+                  leading: Icon(item.icon, color: AppColors.textSecondary),
+                  title: Text(item.label, style: AppTextStyles.body),
+                  trailing: current == item.sortOption
+                      ? const Icon(Icons.check, color: AppColors.accent)
+                      : null,
+                  onTap: () {
+                    controller.setSortOption(item.sortOption);
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(musicControllerProvider); // trigger rebuild saat search/favorite berubah
@@ -74,12 +126,16 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
     final songs = musicController.filteredSongs;
     final currentSong = ref.watch(playerControllerProvider).currentSong;
 
-    // Kelompokkan lagu berdasarkan huruf awal judul (mis. "A", "B", ...)
-    final sorted = [...songs]..sort((a, b) => a.title.compareTo(b.title));
+    // Kelompokkan per huruf HANYA kalau sedang sort "Nama (A-Z)".
+    // Untuk sort Durasi / Terbaru Ditambah, tampil sebagai list biasa
+    // mengikuti urutan dari controller (grouping per huruf tidak relevan).
+    final isGroupedByName = musicController.sortOption == SortOption.titleAsc;
     final Map<String, List<SongModel>> grouped = {};
-    for (final song in sorted) {
-      final letter = song.title.substring(0, 1).toUpperCase();
-      grouped.putIfAbsent(letter, () => []).add(song);
+    if (isGroupedByName) {
+      for (final song in songs) {
+        final letter = song.title.substring(0, 1).toUpperCase();
+        grouped.putIfAbsent(letter, () => []).add(song);
+      }
     }
 
     return SafeArea(
@@ -130,6 +186,12 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                           ),
                           const SizedBox(width: 16),
                           GestureDetector(
+                            onTap: _showSortSheet,
+                            child: const Icon(Icons.sort,
+                                color: AppColors.textPrimary),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
                             onTap: _openSearch,
                             child: const Icon(Icons.search,
                                 color: AppColors.textPrimary),
@@ -142,42 +204,42 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
           const SizedBox(height: 12),
 
           // ---------- Tabs ----------
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              children: List.generate(_tabs.length, (i) {
-                final isActive = i == _activeTab;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 22),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _activeTab = i),
-                    child: Column(
-                      children: [
-                        Text(
-                          _tabs[i],
-                          style: AppTextStyles.body.copyWith(
-                            color: isActive
-                                ? AppColors.favorite
-                                : AppColors.textSecondary,
-                            fontWeight:
-                                isActive ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        if (isActive)
-                          Container(
-                            height: 2,
-                            width: 24,
-                            color: AppColors.favorite,
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-          const Divider(color: AppColors.divider, height: 20),
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 18),
+          //   child: Row(
+          //     children: List.generate(_tabs.length, (i) {
+          //       final isActive = i == _activeTab;
+          //       return Padding(
+          //         padding: const EdgeInsets.only(right: 22),
+          //         child: GestureDetector(
+          //           onTap: () => setState(() => _activeTab = i),
+          //           child: Column(
+          //             children: [
+          //               Text(
+          //                 _tabs[i],
+          //                 style: AppTextStyles.body.copyWith(
+          //                   color: isActive
+          //                       ? AppColors.favorite
+          //                       : AppColors.textSecondary,
+          //                   fontWeight:
+          //                       isActive ? FontWeight.w600 : FontWeight.w400,
+          //                 ),
+          //               ),
+          //               const SizedBox(height: 6),
+          //               if (isActive)
+          //                 Container(
+          //                   height: 2,
+          //                   width: 24,
+          //                   color: AppColors.favorite,
+          //                 ),
+          //             ],
+          //           ),
+          //         ),
+          //       );
+          //     }),
+          //   ),
+          // ),
+          // const Divider(color: AppColors.divider, height: 20),
 
           // ---------- Konten ----------
           Expanded(
@@ -242,15 +304,42 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                       ),
                       const SizedBox(height: 4),
 
-                      // List lagu dikelompokkan per huruf
-                      for (final entry in grouped.entries) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Text(entry.key,
-                              style: AppTextStyles.subheading
-                                  .copyWith(color: AppColors.textMuted)),
-                        ),
-                        for (final song in entry.value)
+                      // List lagu: dikelompokkan per huruf (sort Nama),
+                      // atau list biasa (sort Durasi / Terbaru Ditambah)
+                      if (isGroupedByName)
+                        for (final entry in grouped.entries) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Text(entry.key,
+                                style: AppTextStyles.subheading
+                                    .copyWith(color: AppColors.textMuted)),
+                          ),
+                          for (final song in entry.value)
+                            SongTile(
+                              song: song,
+                              isPlaying: currentSong?.id == song.id,
+                              onTap: () => ref
+                                  .read(playerControllerProvider.notifier)
+                                  .playSong(song),
+                              onMoreTap: () =>
+                                  showAddToPlaylistSheet(context, song),
+                              onLongPress: () async {
+                                final confirmed = await showConfirmDialog(
+                                  context,
+                                  title: 'Hapus Lagu?',
+                                  message:
+                                      '"${song.title}" akan dihapus dari library CPlayer (file di device tidak ikut terhapus).',
+                                );
+                                if (confirmed) {
+                                  ref
+                                      .read(musicControllerProvider.notifier)
+                                      .removeSong(song.id);
+                                }
+                              },
+                            ),
+                        ]
+                      else
+                        for (final song in songs)
                           SongTile(
                             song: song,
                             isPlaying: currentSong?.id == song.id,
@@ -273,7 +362,6 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
                               }
                             },
                           ),
-                      ],
                       const SizedBox(height: 80),
                     ],
                   ))
@@ -288,4 +376,11 @@ class _MusicScreenState extends ConsumerState<MusicScreen> {
       ),
     );
   }
+}
+
+class _SortOptionItem {
+  final SortOption sortOption;
+  final String label;
+  final IconData icon;
+  const _SortOptionItem(this.sortOption, this.label, this.icon);
 }
