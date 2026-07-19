@@ -29,7 +29,7 @@ class MainNavigationScreen extends ConsumerWidget {
     final activeIndex = ref.watch(navigationControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: IndexedStack(
         index: activeIndex,
         children: _screens,

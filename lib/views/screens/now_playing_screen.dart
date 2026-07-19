@@ -4,6 +4,8 @@ import '../../controllers/music_controller.dart';
 import '../../controllers/player_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import 'dart:io';
+import '../../controllers/background_controller.dart';
 
 /// View: halaman Now Playing untuk audio (cover besar, seekbar, kontrol).
 class NowPlayingScreen extends ConsumerWidget {
@@ -53,23 +55,39 @@ class NowPlayingScreen extends ConsumerWidget {
               const Spacer(),
 
               // ---------- Cover Art ----------
-              Container(
-                width: double.infinity,
-                height: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    colors: [
-                      song.coverColor.withOpacity(0.9),
-                      AppColors.background,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Icon(Icons.music_note,
-                    color: Colors.white.withOpacity(0.85), size: 90),
+              Consumer(
+  builder: (context, ref, _) {
+    final bg = ref.watch(backgroundControllerProvider);
+
+    return Container(
+      width: double.infinity,
+      height: 300,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: bg.hasCustomBackground
+            ? null
+            : LinearGradient(
+                colors: [
+                  song.coverColor.withOpacity(0.9),
+                  AppColors.background,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+        image: bg.hasCustomBackground
+            ? DecorationImage(
+                image: FileImage(File(bg.imagePath!)),
+                fit: BoxFit.cover,
+              )
+            : null,
+      ),
+      child: bg.hasCustomBackground
+          ? null
+          : Icon(Icons.music_note,
+              color: Colors.white.withOpacity(0.85), size: 90),
+    );
+  },
+),
               const Spacer(),
 
               // ---------- Title, artist, favorite ----------

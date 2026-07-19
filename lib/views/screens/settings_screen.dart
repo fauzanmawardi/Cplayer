@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../controllers/settings_controller.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import '../../controllers/background_controller.dart';
 
 /// View: halaman Settings (Theme, Language, Playback, Equalizer, About, dll).
 class SettingsScreen extends ConsumerWidget {
@@ -54,30 +55,38 @@ class SettingsScreen extends ConsumerWidget {
               style: AppTextStyles.caption.copyWith(color: AppColors.accent)),
           const SizedBox(height: 4),
           _SettingsTile(
-            icon: Icons.dark_mode_outlined,
-            label: 'Theme',
-            value: settings.isDarkMode ? 'Dark' : 'Light',
-            onTap: controller.toggleDarkMode,
+          icon: Icons.dark_mode_outlined,
+          label: 'Theme',
+          value: settings.isDarkMode ? 'Dark' : 'Light',
+          onTap: () => controller.toggleDarkMode(), // sesuaikan nama method di settingsController kamu
           ),
           _SettingsTile(
-            icon: Icons.language,
-            label: 'Language',
-            value: settings.language,
-            onTap: () => controller.setLanguage(
-              settings.language == 'English' ? 'Indonesia' : 'English',
-            ),
+          icon: Icons.image_outlined,
+          label: 'Background',
+          value: ref.watch(backgroundControllerProvider).hasCustomBackground
+          ? 'Custom'
+          : 'Default',
+          onTap: () => ref.read(backgroundControllerProvider.notifier).pickFromGallery(),
           ),
-          const _SettingsTile(icon: Icons.play_arrow_rounded, label: 'Playback'),
-          const _SettingsTile(icon: Icons.equalizer_rounded, label: 'Equalizer'),
-          const SizedBox(height: 20),
+          // _SettingsTile(
+          //   icon: Icons.language,
+          //   label: 'Language',
+          //   value: settings.language,
+          //   onTap: () => controller.setLanguage(
+          //     settings.language == 'English' ? 'Indonesia' : 'English',
+          //   ),
+          // ),
+          // const _SettingsTile(icon: Icons.play_arrow_rounded, label: 'Playback'),
+          // const _SettingsTile(icon: Icons.equalizer_rounded, label: 'Equalizer'),
+          // const SizedBox(height: 20),
 
-          Text('More',
-              style: AppTextStyles.caption.copyWith(color: AppColors.accent)),
-          const SizedBox(height: 4),
-          const _SettingsTile(icon: Icons.star_border_rounded, label: 'Rate Us'),
-          const _SettingsTile(icon: Icons.ios_share_rounded, label: 'Share App'),
-          const _SettingsTile(
-              icon: Icons.info_outline_rounded, label: 'About Cplayer'),
+          // Text('More',
+          //     style: AppTextStyles.caption.copyWith(color: AppColors.accent)),
+          // const SizedBox(height: 4),
+          // const _SettingsTile(icon: Icons.star_border_rounded, label: 'Rate Us'),
+          // const _SettingsTile(icon: Icons.ios_share_rounded, label: 'Share App'),
+          // const _SettingsTile(
+          //     icon: Icons.info_outline_rounded, label: 'About Cplayer'),
         ],
       ),
     );
